@@ -1,0 +1,5 @@
+node_modules
+gtfs-downloads
+output
+config*
+!config-sample*
