@@ -3,3 +3,6 @@ gtfs-downloads
 output
 config*
 !config-sample*
+
+# Build files
+dist

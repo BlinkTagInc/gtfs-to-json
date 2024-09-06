@@ -2,12 +2,15 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import PrettyError from 'pretty-error'
 
-import gtfsToRoutes from '../lib/gtfs-to-routes.js';
-import { getConfig } from '../lib/file-utils.js';
-import { formatError } from '../lib/log-utils.js';
+import gtfsToJson from '../lib/gtfs-to-json.ts';
+import { getConfig } from '../lib/file-utils.ts';
+import { formatError } from '../lib/log-utils.ts';
 
-const { argv } = yargs(hideBin(process.argv))
+const pe = new PrettyError()
+
+const argv = yargs(hideBin(process.argv))
   .usage('Usage: $0 --config ./config.json')
   .help()
   .option('c', {
@@ -21,18 +24,18 @@ const { argv } = yargs(hideBin(process.argv))
     describe: "Don't import GTFS file.",
     type: 'boolean',
   })
-  .default('skipImport', undefined);
+  .default('skipImport', undefined)
+  .parseSync();
 
-const handleError = (error) => {
-  const text = error || 'Unknown Error';
-  process.stdout.write(`\n${formatError(text)}\n`);
-  console.error(error);
-  process.exit(1);
-};
+  const handleError = (error = new Error('Unknown Error')) => {
+    process.stdout.write(`\n${formatError(error)}\n`)
+    console.error(pe.render(error))
+    process.exit(1)
+  }
 
 const setupImport = async () => {
   const config = await getConfig(argv);
-  await gtfsToRoutes(config);
+  await gtfsToJson(config);
   process.exit();
 };
 

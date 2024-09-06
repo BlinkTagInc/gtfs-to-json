@@ -2,11 +2,7 @@ import { clearLine, cursorTo } from 'node:readline';
 import * as colors from 'yoctocolors';
 import { getFeedInfo } from 'gtfs';
 import { noop } from 'lodash-es';
-import PrettyError from 'pretty-error';
 import Table from 'cli-table';
-
-const pe = new PrettyError();
-pe.start();
 
 /*
  * Creates text for a log of output details.
@@ -20,7 +16,7 @@ export function generateLogText(agency, outputStats, config) {
 
   const logText = [
     `Feed Version: ${feedVersion}`,
-    `GTFS-to-Routes Version: ${config.gtfsToRoutesVersion}`,
+    `GTFS-to-JSON Version: ${config.gtfsToJsonVersion}`,
     `Date Generated: ${new Date()}`,
     `Route Count: ${outputStats.routes}`,
     `Stop Count: ${outputStats.stops}`,
