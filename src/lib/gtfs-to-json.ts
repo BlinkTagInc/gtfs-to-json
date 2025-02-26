@@ -1,4 +1,7 @@
+import path from 'node:path';
 import { rm, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { clone, omit, sortBy, uniqBy } from 'lodash-es';
 import { openDb, importGtfs } from 'gtfs';
@@ -8,7 +11,12 @@ import { getExportPath, writeSanitizedFile } from './file-utils.ts';
 import { getRouteName, msToSeconds } from './formatters.ts';
 import { log, logWarning, generateLogText, logStats } from './log-utils.ts';
 
-import { version } from '../../package.json';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(path.join(__dirname, '../../package.json'), 'utf8'),
+);
+const { version } = packageJson;
 import { IConfig } from '../types/global_interfaces.ts';
 
 const setDefaultConfig = (config: IConfig) => {
