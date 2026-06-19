@@ -11,11 +11,7 @@ import { getExportPath, writeSanitizedFile } from './file-utils.ts';
 import { getRouteName, msToSeconds } from './formatters.ts';
 import { log, logWarning, generateLogText, logStats } from './log-utils.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const packageJson = JSON.parse(
-  readFileSync(path.join(__dirname, '../../package.json'), 'utf8'),
-);
+import packageJson from '../../package.json' with { type: 'json' };
 const { version } = packageJson;
 import { IConfig } from '../types/global_interfaces.ts';
 

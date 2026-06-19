@@ -1,9 +1,11 @@
 import path from 'node:path';
+import { homedir } from 'node:os';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 
-import untildify from 'untildify';
 import sanitize from 'sanitize-filename';
+
+const homeDirectory = homedir();
 
 /*
  * Attempt to parse any config JSON file and read values from CLI.
@@ -60,4 +62,15 @@ export function getExportPath(agencyKey) {
 export function writeSanitizedFile(filePath, fileName, text) {
   const cleanedFileName = sanitize(fileName);
   return writeFile(path.join(filePath, cleanedFileName), text);
+}
+
+/**
+ * Converts a tilde path to a full path
+ * @param pathWithTilde The path to convert
+ * @returns The full path
+ */
+export function untildify(pathWithTilde: string): string {
+  return homeDirectory
+    ? pathWithTilde.replace(/^~(?=$|\/|\\)/, homeDirectory)
+    : pathWithTilde;
 }
