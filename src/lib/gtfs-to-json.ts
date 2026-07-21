@@ -54,8 +54,12 @@ const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: ICon
           )
           .all(String(agency.agencyId));
 
-  const routesJSON = sortBy(uniqBy(routes, 'route_short_name'), (route) =>
-    parseInt(route.route_short_name ?? '', 10),
+  const routesWithShortName = routes.filter((route) => route.route_short_name);
+  const routesWithoutShortName = routes.filter((route) => !route.route_short_name);
+
+  const routesJSON = sortBy(
+    [...uniqBy(routesWithShortName, 'route_short_name'), ...routesWithoutShortName],
+    (route) => parseInt(route.route_short_name ?? '', 10),
   );
 
   for (const route of routesJSON) {
