@@ -59,7 +59,14 @@ const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: ICon
 
   const routesJSON = sortBy(
     [...uniqBy(routesWithShortName, 'route_short_name'), ...routesWithoutShortName],
-    (route) => parseInt(route.route_short_name ?? '', 10),
+    [
+      (route) => {
+        const parsed = parseInt(route.route_short_name ?? '', 10);
+        return Number.isNaN(parsed) ? Infinity : parsed;
+      },
+      (route) => route.route_short_name ?? '',
+      (route) => route.route_long_name ?? '',
+    ],
   );
 
   for (const route of routesJSON) {
