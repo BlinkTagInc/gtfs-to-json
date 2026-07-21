@@ -5,6 +5,7 @@ export interface IConfig {
     path?: string;
     url?: string;
     agencyKey: string;
+    agencyId?: string | number;
   }[];
   skipImport?: boolean;
   verbose?: boolean;

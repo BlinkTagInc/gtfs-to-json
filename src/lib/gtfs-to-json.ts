@@ -25,7 +25,8 @@ const setDefaultConfig = (config: IConfig) => {
   return Object.assign(defaults, config);
 };
 
-const buildAgencyJSON = async (agencyKey: string, config: IConfig, outputStats: Record<string, number>) => {
+const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: IConfig, outputStats: Record<string, number>) => {
+  const agencyKey = agency.agencyKey;
   const db = openDb(config);
   const routes: {
     route_id: string;
@@ -40,11 +41,18 @@ const buildAgencyJSON = async (agencyKey: string, config: IConfig, outputStats: 
       stop_lon: number;
     }[];
     agency_id?: string;
-  }[] = db
-    .prepare(
-      'SELECT route_id, route_short_name, route_long_name, route_type FROM routes ORDER BY route_short_name',
-    )
-    .all();
+  }[] =
+    agency.agencyId === undefined
+      ? db
+          .prepare(
+            'SELECT route_id, route_short_name, route_long_name, route_type FROM routes ORDER BY route_short_name',
+          )
+          .all()
+      : db
+          .prepare(
+            'SELECT route_id, route_short_name, route_long_name, route_type FROM routes WHERE agency_id = ? ORDER BY route_short_name',
+          )
+          .all(String(agency.agencyId));
 
   const routesJSON = sortBy(uniqBy(routes, 'route_short_name'), (route) =>
     parseInt(route.route_short_name ?? '', 10),
@@ -142,7 +150,7 @@ const gtfsToJson = async (initialConfig: IConfig) => {
     await mkdir(exportPath, { recursive: true });
     config.log(`Starting JSON creation for ${agencyKey}`);
 
-    await buildAgencyJSON(agencyKey, config, outputStats);
+    await buildAgencyJSON(agency, config, outputStats);
 
     let jsonPath = `${process.cwd()}/${exportPath}`;
 
