@@ -1,8 +1,8 @@
-import { clearLine, cursorTo } from 'node:readline';
-import * as colors from 'yoctocolors';
-import { getFeedInfo } from 'gtfs';
-import { noop } from 'lodash-es';
-import Table from 'cli-table';
+import { clearLine, cursorTo } from "node:readline";
+import * as colors from "yoctocolors";
+import { getFeedInfo } from "gtfs";
+import { noop } from "lodash-es";
+import Table from "cli-table";
 
 /*
  * Creates text for a log of output details.
@@ -12,7 +12,7 @@ export function generateLogText(agency, outputStats, config) {
   const feedVersion =
     feedInfo.length > 0 && feedInfo[0].feed_version
       ? feedInfo[0].feed_version
-      : 'Unknown';
+      : "Unknown";
 
   const logText = [
     `Feed Version: ${feedVersion}`,
@@ -28,14 +28,14 @@ export function generateLogText(agency, outputStats, config) {
     logText.push(`Source: ${agency.path}`);
   }
 
-  return logText.join('\n');
+  return logText.join("\n");
 }
 
 /*
  * Returns a log function based on config settings
  */
 export function log(config) {
-  if (config.verbose === false) {
+  if (config.logLevel === "silent") {
     return noop;
   }
 
@@ -48,7 +48,7 @@ export function log(config) {
       clearLine(process.stdout, 0);
       cursorTo(process.stdout, 0);
     } else {
-      process.stdout.write('\n');
+      process.stdout.write("\n");
     }
 
     process.stdout.write(text);
@@ -85,7 +85,7 @@ export function logError(config) {
  * Format console warning text
  */
 export function formatWarning(text) {
-  const warningMessage = `${colors.underline('Warning')}: ${text}`;
+  const warningMessage = `${colors.underline("Warning")}: ${text}`;
   return colors.yellow(warningMessage);
 }
 
@@ -94,9 +94,9 @@ export function formatWarning(text) {
  */
 export function formatError(error) {
   const messageText = error instanceof Error ? error.message : error;
-  const errorMessage = `${colors.underline('Error')}: ${messageText.replace(
-    'Error: ',
-    '',
+  const errorMessage = `${colors.underline("Error")}: ${messageText.replace(
+    "Error: ",
+    "",
   )}`;
   return colors.red(errorMessage);
 }
@@ -112,10 +112,10 @@ export function logStats(stats, config) {
 
   const table = new Table({
     colWidths: [40, 20],
-    head: ['Item', 'Count'],
+    head: ["Item", "Count"],
   });
 
-  table.push(['🔄 Routes', stats.routes], ['🔄 Stops', stats.stops]);
+  table.push(["🔄 Routes", stats.routes], ["🔄 Stops", stats.stops]);
 
   config.log(table.toString());
 }

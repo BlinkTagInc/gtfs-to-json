@@ -1,31 +1,35 @@
-import path from 'node:path';
-import { rm, mkdir } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import path from "node:path";
+import { rm, mkdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-import { clone, omit, sortBy, uniqBy } from 'lodash-es';
-import { openDb, importGtfs } from 'gtfs';
-import Timer from 'timer-machine';
+import { clone, omit, sortBy, uniqBy } from "lodash-es";
+import { openDb, importGtfs } from "gtfs";
+import Timer from "timer-machine";
 
-import { getExportPath, writeSanitizedFile } from './file-utils.ts';
-import { getRouteName, msToSeconds } from './formatters.ts';
-import { log, logWarning, generateLogText, logStats } from './log-utils.ts';
+import { getExportPath, writeSanitizedFile } from "./file-utils.ts";
+import { getRouteName, msToSeconds } from "./formatters.ts";
+import { log, logWarning, generateLogText, logStats } from "./log-utils.ts";
 
-import packageJson from '../../package.json' with { type: 'json' };
+import packageJson from "../../package.json" with { type: "json" };
 const { version } = packageJson;
-import { IConfig } from '../types/global_interfaces.ts';
+import { IConfig } from "../types/global_interfaces.ts";
 
 const setDefaultConfig = (config: IConfig) => {
   const defaults = {
     gtfsToJsonVersion: version,
     skipImport: false,
-    verbose: true,
+    logLevel: "info",
   };
 
   return Object.assign(defaults, config);
 };
 
-const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: IConfig, outputStats: Record<string, number>) => {
+const buildAgencyJSON = async (
+  agency: IConfig["agencies"][number],
+  config: IConfig,
+  outputStats: Record<string, number>,
+) => {
   const agencyKey = agency.agencyKey;
   const db = openDb(config);
   const routes: {
@@ -45,27 +49,32 @@ const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: ICon
     agency.agencyId === undefined
       ? db
           .prepare(
-            'SELECT route_id, route_short_name, route_long_name, route_type FROM routes ORDER BY route_short_name',
+            "SELECT route_id, route_short_name, route_long_name, route_type FROM routes ORDER BY route_short_name",
           )
           .all()
       : db
           .prepare(
-            'SELECT route_id, route_short_name, route_long_name, route_type FROM routes WHERE agency_id = ? ORDER BY route_short_name',
+            "SELECT route_id, route_short_name, route_long_name, route_type FROM routes WHERE agency_id = ? ORDER BY route_short_name",
           )
           .all(String(agency.agencyId));
 
   const routesWithShortName = routes.filter((route) => route.route_short_name);
-  const routesWithoutShortName = routes.filter((route) => !route.route_short_name);
+  const routesWithoutShortName = routes.filter(
+    (route) => !route.route_short_name,
+  );
 
   const routesJSON = sortBy(
-    [...uniqBy(routesWithShortName, 'route_short_name'), ...routesWithoutShortName],
+    [
+      ...uniqBy(routesWithShortName, "route_short_name"),
+      ...routesWithoutShortName,
+    ],
     [
       (route) => {
-        const parsed = parseInt(route.route_short_name ?? '', 10);
+        const parsed = parseInt(route.route_short_name ?? "", 10);
         return Number.isNaN(parsed) ? Infinity : parsed;
       },
-      (route) => route.route_short_name ?? '',
-      (route) => route.route_long_name ?? '',
+      (route) => route.route_short_name ?? "",
+      (route) => route.route_long_name ?? "",
     ],
   );
 
@@ -77,7 +86,7 @@ const buildAgencyJSON = async (agency: IConfig['agencies'][number], config: ICon
       stop_lon: number;
     }[] = db
       .prepare(
-        'SELECT stops.stop_id, stops.stop_name, stops.stop_lat, stops.stop_lon from stops INNER JOIN stop_times ON stops.stop_id = stop_times.stop_id INNER JOIN trips on trips.trip_id = stop_times.trip_id WHERE trips.route_id = ? ORDER BY stops.stop_name',
+        "SELECT stops.stop_id, stops.stop_name, stops.stop_lat, stops.stop_lon from stops INNER JOIN stop_times ON stops.stop_id = stop_times.stop_id INNER JOIN trips on trips.trip_id = stop_times.trip_id WHERE trips.route_id = ? ORDER BY stops.stop_name",
       )
       .all(route.route_id);
 
@@ -121,37 +130,37 @@ const gtfsToJson = async (initialConfig: IConfig) => {
     if (config.skipImport !== true) {
       // Import GTFS
       const agencyConfig = {
-        ...clone(omit(config, 'agencies')),
+        ...clone(omit(config, "agencies")),
         agencies: [
           {
             exclude: [
-              'areas',
-              'attributions',
-              'booking_rules',
-              'calendar_attributes',
-              'directions',
-              'fare_attributes',
-              'fare_transfer_rules',
-              'fare_leg_rules',
-              'fare_products',
-              'fare_rules',
-              'feed_info',
-              'levels',
-              'location_group_stops',
-              'loacation_groups',
-              'locations',
-              'pathways',
-              'rider_categories',
-              'route_attributes',
-              'route_networks',
-              'shapes',
-              'translations',
-              'timeframes',
-              'transfers'
+              "areas",
+              "attributions",
+              "booking_rules",
+              "calendar_attributes",
+              "directions",
+              "fare_attributes",
+              "fare_transfer_rules",
+              "fare_leg_rules",
+              "fare_products",
+              "fare_rules",
+              "feed_info",
+              "levels",
+              "location_group_stops",
+              "loacation_groups",
+              "locations",
+              "pathways",
+              "rider_categories",
+              "route_attributes",
+              "route_networks",
+              "shapes",
+              "translations",
+              "timeframes",
+              "transfers",
             ],
             ...agency,
           },
-        ]
+        ],
       };
 
       await importGtfs(agencyConfig);
@@ -167,7 +176,7 @@ const gtfsToJson = async (initialConfig: IConfig) => {
 
     // Generate output log.txt
     const logText = generateLogText(agency, outputStats, config);
-    await writeSanitizedFile(exportPath, 'log.txt', logText);
+    await writeSanitizedFile(exportPath, "log.txt", logText);
 
     config.log(`JSON for ${agencyKey} created at ${jsonPath}`);
 

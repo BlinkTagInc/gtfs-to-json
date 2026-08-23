@@ -1,4 +1,4 @@
 allowBuilds:
   better-sqlite3: true
 minimumReleaseAgeExclude:
-  - lint-staged@17.1.1
+  - gtfs@4.21.0

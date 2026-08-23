@@ -47,22 +47,22 @@ For each agency, a folder is created under `output/<agencyKey>` containing a `<a
 
 ### Config options
 
-| option | type | description |
-| --- | --- | --- |
-| `agencies` | array | Required. An array of agencies to import, each with the options below. |
-| `sqlitePath` | string | Full path to the SQLite database used to store imported GTFS data. Defaults to an in-memory database. |
-| `skipImport` | boolean | If true, don't download or import GTFS data — just regenerate JSON from the existing SQLite database. |
+| option             | type    | description                                                                                           |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `agencies`         | array   | Required. An array of agencies to import, each with the options below.                                |
+| `logLevel`         | string  | `silent`, `error`, `warning`, or `info`                                                               |
+| `sqlitePath`       | string  | Full path to the SQLite database used to store imported GTFS data. Defaults to an in-memory database. |
+| `skipImport`       | boolean | If true, don't download or import GTFS data — just regenerate JSON from the existing SQLite database. |
 | `ignoreDuplicates` | boolean | If true, ignore duplicate entries encountered while importing GTFS data instead of throwing an error. |
-| `verbose` | boolean | If false, disable console logging. Defaults to `true`. |
 
 ### Agency options
 
-| option | type | description |
-| --- | --- | --- |
-| `agencyKey` | string | Required. A short name used to identify the agency and name its output folder/file. |
-| `url` | string | URL to download the agency's GTFS zip file from. Either `url` or `path` is required. |
-| `path` | string | Path to a local GTFS zip file or folder. Either `url` or `path` is required. |
-| `agencyId` | string \| number | Optional. If a GTFS feed contains data for multiple agencies (as identified by `agency_id` in `agency.txt`), set this to only include routes and stops served by that agency in the output JSON. |
+| option      | type             | description                                                                                                                                                                                      |
+| ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `agencyKey` | string           | Required. A short name used to identify the agency and name its output folder/file.                                                                                                              |
+| `url`       | string           | URL to download the agency's GTFS zip file from. Either `url` or `path` is required.                                                                                                             |
+| `path`      | string           | Path to a local GTFS zip file or folder. Either `url` or `path` is required.                                                                                                                     |
+| `agencyId`  | string \| number | Optional. If a GTFS feed contains data for multiple agencies (as identified by `agency_id` in `agency.txt`), set this to only include routes and stops served by that agency in the output JSON. |
 
 This is useful for shared regional GTFS feeds that bundle several agencies together. For example, the following two config entries both pull from the same feed but each only outputs the routes/stops for their respective agency:
 

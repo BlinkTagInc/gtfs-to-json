@@ -7,8 +7,8 @@ export interface IConfig {
     agencyKey: string;
     agencyId?: string | number;
   }[];
+  logLevel?: string;
   skipImport?: boolean;
-  verbose?: boolean;
   log: Function;
   logWarning: Function;
 }
