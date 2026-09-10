@@ -30,6 +30,8 @@ gtfs-to-json --skipImport
 
 For each agency, a folder is created under `output/<agencyKey>` containing a `<agencyKey>.json` file with route and stop data, plus a `log.txt` describing the import.
 
+Child stops are replaced with their parent station's ID, name, and coordinates. Each station appears once per route, sorted by name. Stops without a parent station are included as-is.
+
 ## Configuration
 
 `gtfs-to-json` uses a `config.json` file to define one or more GTFS agencies to import and export as JSON. Each entry in the `agencies` array can specify either a `url` to download the GTFS from or a local `path` to a GTFS file or folder.

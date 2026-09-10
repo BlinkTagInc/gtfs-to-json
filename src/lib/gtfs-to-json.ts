@@ -86,12 +86,19 @@ const buildAgencyJSON = async (
       stop_lon: number;
     }[] = db
       .prepare(
-        "SELECT stops.stop_id, stops.stop_name, stops.stop_lat, stops.stop_lon from stops INNER JOIN stop_times ON stops.stop_id = stop_times.stop_id INNER JOIN trips on trips.trip_id = stop_times.trip_id WHERE trips.route_id = ? ORDER BY stops.stop_name",
+        `SELECT station.stop_id, station.stop_name, station.stop_lat, station.stop_lon
+         FROM stops
+         INNER JOIN stop_times ON stops.stop_id = stop_times.stop_id
+         INNER JOIN trips ON trips.trip_id = stop_times.trip_id
+         INNER JOIN stops AS station
+           ON station.stop_id = COALESCE(NULLIF(stops.parent_station, ''), stops.stop_id)
+         WHERE trips.route_id = ?
+         ORDER BY station.stop_name`,
       )
       .all(route.route_id);
 
     route.route_full_name = getRouteName(route);
-    route.stops = uniqBy(stops, (stop) => stop.stop_name);
+    route.stops = uniqBy(stops, (stop) => stop.stop_id);
     route.agency_id = agencyKey;
     outputStats.stops += route.stops.length;
   }
