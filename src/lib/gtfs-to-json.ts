@@ -9,6 +9,7 @@ import Timer from "timer-machine";
 
 import { getExportPath, writeSanitizedFile } from "./file-utils.ts";
 import { getRouteName, msToSeconds } from "./formatters.ts";
+import { deduplicateStops } from "./stop-utils.ts";
 import { log, logWarning, generateLogText, logStats } from "./log-utils.ts";
 
 import packageJson from "../../package.json" with { type: "json" };
@@ -93,12 +94,12 @@ const buildAgencyJSON = async (
          INNER JOIN stops AS station
            ON station.stop_id = COALESCE(NULLIF(stops.parent_station, ''), stops.stop_id)
          WHERE trips.route_id = ?
-         ORDER BY station.stop_name`,
+         ORDER BY station.stop_name, station.stop_id`,
       )
       .all(route.route_id);
 
     route.route_full_name = getRouteName(route);
-    route.stops = uniqBy(stops, (stop) => stop.stop_id);
+    route.stops = deduplicateStops(stops);
     route.agency_id = agencyKey;
     outputStats.stops += route.stops.length;
   }

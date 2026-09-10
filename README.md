@@ -32,6 +32,8 @@ For each agency, a folder is created under `output/<agencyKey>` containing a `<a
 
 Child stops are replaced with their parent station's ID, name, and coordinates. Each station appears once per route, sorted by name. Stops without a parent station are included as-is.
 
+Within each route, stops with exactly matching names within 1,000 feet of an already included stop are omitted. Stops are processed by name and then ID, so the retained stop is consistent across exports.
+
 ## Configuration
 
 `gtfs-to-json` uses a `config.json` file to define one or more GTFS agencies to import and export as JSON. Each entry in the `agencies` array can specify either a `url` to download the GTFS from or a local `path` to a GTFS file or folder.
