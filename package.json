@@ -1,6 +1,6 @@
 {
   "name": "gtfs-to-json",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Export GTFS Schedule routes and stops as JSON.",
   "keywords": [
