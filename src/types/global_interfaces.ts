@@ -1,14 +1,28 @@
+import type { GtfsDatabaseConfig } from 'gtfs';
+
+export type LogFunction = (text: string, overwrite?: boolean) => void;
+
+export interface AgencyConfig {
+  path?: string;
+  url?: string;
+  agencyKey: string;
+  sourceId?: string;
+  agencyId?: string | number;
+  headers?: Record<string, string>;
+}
+
 export interface IConfig {
-  db?: any;
+  db?: GtfsDatabaseConfig['client'];
   sqlitePath?: string;
-  agencies: {
-    path?: string;
-    url?: string;
-    agencyKey: string;
-    agencyId?: string | number;
-  }[];
-  logLevel?: string;
+  agencies: AgencyConfig[];
+  logLevel?: 'silent' | 'error' | 'warning' | 'info';
   skipImport?: boolean;
-  log: Function;
-  logWarning: Function;
+  ignoreDuplicates?: boolean;
+  downloadTimeout?: number;
+  logFunction?: LogFunction;
+}
+
+export interface RuntimeConfig extends IConfig {
+  gtfsToJsonVersion: string;
+  log: LogFunction;
 }

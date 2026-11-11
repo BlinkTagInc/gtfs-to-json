@@ -1,0 +1,6 @@
+route_id,agency_id,route_short_name,route_long_name,route_type
+r10,A,10,Ten,3
+r2,A,2,Two,3
+dup,A,2,Duplicate,3
+blank,A,,Unnamed,3
+other,B,99,Other,3

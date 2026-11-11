@@ -1,18 +1,23 @@
-import { clearLine, cursorTo } from "node:readline";
-import * as colors from "yoctocolors";
-import { getFeedInfo } from "gtfs";
-import { noop } from "lodash-es";
-import Table from "cli-table";
+import { clearLine, cursorTo } from 'node:readline';
+import * as colors from 'yoctocolors';
+import type {
+  AgencyConfig,
+  IConfig,
+  RuntimeConfig,
+} from '../types/global_interfaces.ts';
+import { noop } from 'lodash-es';
+import Table from 'cli-table';
 
 /*
  * Creates text for a log of output details.
  */
-export function generateLogText(agency, outputStats, config) {
-  const feedInfo = getFeedInfo();
-  const feedVersion =
-    feedInfo.length > 0 && feedInfo[0].feed_version
-      ? feedInfo[0].feed_version
-      : "Unknown";
+export function generateLogText(
+  agency: AgencyConfig,
+  outputStats: Record<string, number>,
+  config: RuntimeConfig,
+  version?: string | null,
+) {
+  const feedVersion = version || 'Unknown';
 
   const logText = [
     `Feed Version: ${feedVersion}`,
@@ -28,14 +33,14 @@ export function generateLogText(agency, outputStats, config) {
     logText.push(`Source: ${agency.path}`);
   }
 
-  return logText.join("\n");
+  return logText.join('\n');
 }
 
 /*
  * Returns a log function based on config settings
  */
-export function log(config) {
-  if (config.logLevel === "silent") {
+export function log(config: IConfig) {
+  if (config.logLevel === 'silent') {
     return noop;
   }
 
@@ -43,12 +48,12 @@ export function log(config) {
     return config.logFunction;
   }
 
-  return (text, overwrite) => {
+  return (text: string, overwrite?: boolean) => {
     if (overwrite === true && process.stdout.isTTY) {
       clearLine(process.stdout, 0);
       cursorTo(process.stdout, 0);
     } else {
-      process.stdout.write("\n");
+      process.stdout.write('\n');
     }
 
     process.stdout.write(text);
@@ -58,12 +63,12 @@ export function log(config) {
 /*
  * Returns an warning log function based on config settings
  */
-export function logWarning(config) {
+export function logWarning(config: IConfig) {
   if (config.logFunction) {
     return config.logFunction;
   }
 
-  return (text) => {
+  return (text: string) => {
     process.stdout.write(`\n${formatWarning(text)}\n`);
   };
 }
@@ -71,12 +76,12 @@ export function logWarning(config) {
 /*
  * Returns an error log function based on config settings
  */
-export function logError(config) {
+export function logError(config: IConfig) {
   if (config.logFunction) {
     return config.logFunction;
   }
 
-  return (text) => {
+  return (text: string) => {
     process.stdout.write(`\n${formatError(text)}\n`);
   };
 }
@@ -84,19 +89,19 @@ export function logError(config) {
 /*
  * Format console warning text
  */
-export function formatWarning(text) {
-  const warningMessage = `${colors.underline("Warning")}: ${text}`;
+export function formatWarning(text: string) {
+  const warningMessage = `${colors.underline('Warning')}: ${text}`;
   return colors.yellow(warningMessage);
 }
 
 /*
  * Format console error text
  */
-export function formatError(error) {
+export function formatError(error: Error | string) {
   const messageText = error instanceof Error ? error.message : error;
-  const errorMessage = `${colors.underline("Error")}: ${messageText.replace(
-    "Error: ",
-    "",
+  const errorMessage = `${colors.underline('Error')}: ${messageText.replace(
+    'Error: ',
+    '',
   )}`;
   return colors.red(errorMessage);
 }
@@ -104,7 +109,7 @@ export function formatError(error) {
 /*
  * Print a table of stats to the console.
  */
-export function logStats(stats, config) {
+export function logStats(stats: Record<string, number>, config: RuntimeConfig) {
   // Hide stats table from custom log functions
   if (config.logFunction) {
     return;
@@ -112,10 +117,13 @@ export function logStats(stats, config) {
 
   const table = new Table({
     colWidths: [40, 20],
-    head: ["Item", "Count"],
+    head: ['Item', 'Count'],
   });
 
-  table.push(["🔄 Routes", stats.routes], ["🔄 Stops", stats.stops]);
+  table.push(
+    ['🔄 Routes', String(stats.routes)],
+    ['🔄 Stops', String(stats.stops)],
+  );
 
   config.log(table.toString());
 }

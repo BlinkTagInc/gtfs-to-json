@@ -1,8 +1,8 @@
 interface Stop {
   stop_id: string;
-  stop_name: string;
-  stop_lat: number;
-  stop_lon: number;
+  stop_name: string | null;
+  stop_lat: number | null;
+  stop_lon: number | null;
 }
 
 const earthRadiusMeters = 6371008.8;
@@ -16,7 +16,13 @@ function areNearby(first: Stop, second: Stop): boolean {
     second.stop_lat,
     second.stop_lon,
   ];
-  if (!coordinates.every(Number.isFinite)) {
+  if (
+    first.stop_lat === null ||
+    first.stop_lon === null ||
+    second.stop_lat === null ||
+    second.stop_lon === null ||
+    !coordinates.every(Number.isFinite)
+  ) {
     return false;
   }
 
@@ -36,7 +42,7 @@ function areNearby(first: Stop, second: Stop): boolean {
 
 export function deduplicateStops<T extends Stop>(stops: T[]): T[] {
   const seenIds = new Set<string>();
-  const stopsByName = new Map<string, T[]>();
+  const stopsByName = new Map<string | null, T[]>();
   const result: T[] = [];
 
   for (const stop of stops) {

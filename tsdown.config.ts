@@ -11,7 +11,9 @@ export default defineConfig({
   target: false,
   inputOptions: {
     onwarn(warning, warn) {
-      if (warning.code === 'SOURCEMAP_BROKEN') return;
+      if (warning.code === 'SOURCEMAP_BROKEN') {
+        return;
+      }
       warn(warning);
     },
   },

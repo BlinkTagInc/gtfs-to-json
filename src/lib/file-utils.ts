@@ -10,8 +10,14 @@ const homeDirectory = homedir();
 /*
  * Attempt to parse any config JSON file and read values from CLI.
  */
-export async function getConfig(argv) {
+export async function getConfig(argv: {
+  configPath?: string;
+  skipImport?: boolean;
+}) {
   let config;
+  const overrides = Object.fromEntries(
+    Object.entries(argv).filter(([, value]) => value !== undefined),
+  );
 
   if (argv.configPath) {
     // If a `configPath` is specified, try to read it and throw error if it doesn't exist
@@ -27,7 +33,7 @@ export async function getConfig(argv) {
         );
         throw error;
       });
-      config = Object.assign(JSON.parse(data), argv);
+      config = Object.assign(JSON.parse(data), overrides);
     } catch (error) {
       console.error(
         new Error(
@@ -40,7 +46,7 @@ export async function getConfig(argv) {
     // Else if `config.json` exists, use config values read from it
     try {
       const data = await readFile(path.resolve('./config.json'), 'utf8');
-      config = Object.assign(JSON.parse(data), argv);
+      config = Object.assign(JSON.parse(data), overrides);
       console.log('Using configuration from ./config.json');
     } catch (error) {
       console.error(
@@ -55,11 +61,15 @@ export async function getConfig(argv) {
   return config;
 }
 
-export function getExportPath(agencyKey) {
+export function getExportPath(agencyKey: string) {
   return path.join('output', sanitize(agencyKey));
 }
 
-export function writeSanitizedFile(filePath, fileName, text) {
+export function writeSanitizedFile(
+  filePath: string,
+  fileName: string,
+  text: string,
+) {
   const cleanedFileName = sanitize(fileName);
   return writeFile(path.join(filePath, cleanedFileName), text);
 }
