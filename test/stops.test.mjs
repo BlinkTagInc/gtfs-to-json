@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { deduplicateStops } from '../src/lib/stop-utils.ts';
+import { deduplicateStops } from '../src/data/stops.ts';
 
-function stop(id: string, name: string, feetNorth = 0) {
+function stop(id, name, feetNorth = 0) {
   return {
     stop_id: id,
     stop_name: name,
@@ -57,4 +57,17 @@ test('uses longitude as well as latitude and keeps calls independent', () => {
     distant,
   ]);
   assert.deepEqual(deduplicateStops([nearby]), [nearby]);
+});
+
+test('does not merge unnamed stops or stops with missing coordinates', () => {
+  const first = stop('a', '');
+  const second = stop('b', '');
+  assert.deepEqual(deduplicateStops([first, second]), [first, second]);
+  const missing = { ...stop('c', 'Central'), stop_lat: null };
+  const named = stop('d', 'Central');
+  assert.deepEqual(deduplicateStops([missing, named]), [missing, named]);
+  assert.deepEqual(
+    deduplicateStops([named, stop('e', 'Central')], 0).length,
+    2,
+  );
 });

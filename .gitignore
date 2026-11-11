@@ -1,8 +1,12 @@
 node_modules
 gtfs-downloads
 output
-config*
-!config-sample*
+/config*
+!/config-sample*
 
 # Build files
 dist
+
+json
+*.sqlite*
+*.tgz

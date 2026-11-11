@@ -1,88 +1,151 @@
 # GTFS-to-JSON
 
-Generate JSON of transit route data from a GTFS file
+Export GTFS Schedule routes and stops as JSON. Import local ZIP files, directories, or download URLs, or export data already stored in a node-GTFS v5 database.
 
-## Installation
+Uses the same `sources`, `database`, `extensions`, and `reporting` configuration as [node-GTFS v5](https://github.com/BlinkTagInc/node-gtfs), with JSON-specific options under `export`. Requires Node.js 22.18+ (22.x), 24, 26, or a newer compatible version. ESM only.
 
-```
-npm install gtfs-to-json -g
-```
+## Quick start
 
-## Usage
-
-`gtfs-to-json` runs from the command line. By default it looks for a `config.json` file in the directory it is run from.
-
-```
-gtfs-to-json
+```sh
+npm install -g gtfs-to-json
+gtfs-to-json --input ./gtfs.zip --output ./json
 ```
 
-You can also specify a path to a config file:
+Or save a configuration as `config.json` and run `gtfs-to-json`:
 
+```json
+{
+  "sources": [
+    {
+      "sourceId": "county-bus",
+      "schedule": { "url": "https://county.gov/gtfs.zip" }
+    }
+  ],
+  "export": { "outputDirectory": "./json" }
+}
 ```
-gtfs-to-json --config /path/to/your/custom-config.json
+
+See [config-sample.json](config-sample.json) and [config-sample-full.json](config-sample-full.json). Relative paths resolve from the working directory.
+
+## CLI
+
+```sh
+gtfs-to-json --config ./config.json
+gtfs-to-json --url https://county.gov/gtfs.zip --source-id county-bus
+gtfs-to-json --database ./transit.sqlite --source-id county-bus --output ./json
+gtfs-to-json --config ./config.json --agency-id A --overwrite
 ```
 
-To skip re-downloading and re-importing the GTFS and just regenerate JSON from data already imported into SQLite:
+| Flag                             | Purpose                                                       |
+| -------------------------------- | ------------------------------------------------------------- |
+| `-c, --config <file>`            | Configuration file; defaults to `./config.json` if present    |
+| `--input <path>`                 | Local GTFS ZIP or directory                                   |
+| `--url <url>`                    | GTFS download URL; cannot be combined with `--input`          |
+| `--database <path>`              | SQLite database                                               |
+| `--source-id <id>`               | Source for direct input or source selection                   |
+| `--output <path>`                | Output directory                                              |
+| `--agency-id <id>`               | Filter by the feed's GTFS `agency_id`                         |
+| `--stop-merge-distance <meters>` | Nearby stop merging distance; `0` disables name-based merging |
+| `--overwrite`                    | Replace a previous JSON export                                |
+| `-l, --log-level <level>`        | `silent`, `error`, `warn`, or `info`                          |
+| `-h, --help`                     | Show help                                                     |
+| `-v, --version`                  | Print version                                                 |
 
+CLI flags override the corresponding configuration options. Direct `--input` or `--url` replaces configured sources and uses source ID `default` unless `--source-id` is supplied. Sources with `schedule` are imported; omit `schedule` to reuse an existing database. An optional `export` command is accepted: `gtfs-to-json export --input ./gtfs.zip`.
+
+## JavaScript
+
+```js
+import { exportJSON } from 'gtfs-to-json';
+
+const result = await exportJSON({
+  sources: [{ sourceId: 'bus', schedule: { path: './gtfs.zip' } }],
+  export: { outputDirectory: './json', overwrite: true },
+});
+
+console.log(result.outputDirectory, result.files);
 ```
-gtfs-to-json --skipImport
-```
 
-For each agency, a folder is created under `output/<agencyKey>` containing a `<agencyKey>.json` file with route and stop data, plus a `log.txt` describing the import.
-
-Child stops are replaced with their parent station's ID, name, and coordinates. Each station appears once per route, sorted by name. Stops without a parent station are included as-is.
-
-Within each route, stops with exactly matching names within 1,000 feet of an already included stop are omitted. Stops are processed by name and then ID, so the retained stop is consistent across exports.
+The function returns the absolute output directory and relative JSON file paths. TypeScript exports include `JSONConfig` and `JSONExportOptions`. Library reporting follows node-GTFS; supply `reporting.reporter` to receive events, or use its `createConsoleReporter()` for CLI-style output. The CLI installs that reporter automatically.
 
 ## Configuration
 
-`gtfs-to-json` uses a `config.json` file to define one or more GTFS agencies to import and export as JSON. Each entry in the `agencies` array can specify either a `url` to download the GTFS from or a local `path` to a GTFS file or folder.
+The database defaults to in-memory SQLite. Set `database.path` to keep imported data between runs, or supply a node-GTFS `database.client`. Multiple sources require distinct `sourceId` values. Only a selected `export.sourceId` is imported/exported when that filter is set.
+
+Configure download headers and timeouts with `sources[].schedule.requestHeaders` and `timeoutMs`. Import options go under `sources[].schedule.import`; for example, `validation.onDuplicateKey: "keep-first"` keeps the first row when a feed repeats a primary key. Shared settings are validated by node-GTFS; unknown JSON export options are rejected.
+
+| `export` option           | Default                | Purpose                                                                          |
+| ------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| `outputDirectory`         | `"./json"`             | Dedicated destination directory                                                  |
+| `overwrite`               | `false`                | Replace a previous manifest-backed JSON export                                   |
+| `sourceId`                | All configured sources | Export one source                                                                |
+| `agencyId`                | All agencies           | Filter routes by their GTFS agency ID (string)                                   |
+| `stopMergeDistanceMeters` | `304.8`                | Merge identical stop names within this distance; `0` keeps all distinct stop IDs |
+
+To export without importing:
 
 ```json
 {
-  "agencies": [
-    {
-      "agencyKey": "county-bus",
-      "url": "https://county.gov/gtfs.zip"
-    }
-  ]
+  "database": { "path": "./transit.sqlite" },
+  "sources": [{ "sourceId": "county-bus" }],
+  "export": { "outputDirectory": "./json", "overwrite": true }
 }
 ```
 
-### Config options
+## Output
 
-| option             | type    | description                                                                                           |
-| ------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
-| `agencies`         | array   | Required. An array of agencies to import, each with the options below.                                |
-| `logLevel`         | string  | `silent`, `error`, `warning`, or `info`                                                               |
-| `sqlitePath`       | string  | Full path to the SQLite database used to store imported GTFS data. Defaults to an in-memory database. |
-| `skipImport`       | boolean | If true, don't download or import GTFS data — just regenerate JSON from the existing SQLite database. |
-| `ignoreDuplicates` | boolean | If true, ignore duplicate entries encountered while importing GTFS data instead of throwing an error. |
-
-### Agency options
-
-| option      | type             | description                                                                                                                                                                                      |
-| ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `agencyKey` | string           | Required. A short name used to identify the agency and name its output folder/file.                                                                                                              |
-| `url`       | string           | URL to download the agency's GTFS zip file from. Either `url` or `path` is required.                                                                                                             |
-| `path`      | string           | Path to a local GTFS zip file or folder. Either `url` or `path` is required.                                                                                                                     |
-| `agencyId`  | string \| number | Optional. If a GTFS feed contains data for multiple agencies (as identified by `agency_id` in `agency.txt`), set this to only include routes and stops served by that agency in the output JSON. |
-
-This is useful for shared regional GTFS feeds that bundle several agencies together. For example, the following two config entries both pull from the same feed but each only outputs the routes/stops for their respective agency:
+Each source produces `<sourceId>/<sourceId>.json` (for example, `eurekatransit/eurekatransit.json`), containing an array:
 
 ```json
-{
-  "agencies": [
-    {
-      "agencyKey": "kanan",
-      "url": "https://govcbus.com/gtfs",
-      "agencyId": 144
-    },
-    {
-      "agencyKey": "gctd",
-      "url": "https://govcbus.com/gtfs",
-      "agencyId": 139
-    }
-  ]
-}
+[
+  {
+    "source_id": "county-bus",
+    "route_id": "r2",
+    "agency_id": "A",
+    "route_short_name": "2",
+    "route_long_name": "Downtown",
+    "route_type": 3,
+    "route_full_name": "2 - Downtown",
+    "stops": [
+      {
+        "stop_id": "central",
+        "stop_name": "Central Station",
+        "stop_lat": 37.1,
+        "stop_lon": -122.1
+      }
+    ]
+  }
+]
 ```
+
+- Every route is retained, including routes sharing short names and routes without trips. Routes sort by numeric short-name prefix, then short name, long name, and ID.
+- Stops include all trips for the route, across service dates and directions. They sort by name and ID, not travel order.
+- Child stops use their parent station's identity and available fields. A missing parent falls back to the child stop.
+- Each stop ID appears once per route. Stops with identical nonempty names within the configured distance of an already retained stop are merged. Missing coordinates prevent proximity merging; zero coordinates are valid.
+- GTFS `agency_id` is preserved, including `null` when absent. `source_id` identifies the feed. Unsafe or case-colliding source IDs receive filesystem-safe names; JSON IDs stay unchanged.
+
+The root `json-manifest.json` records generated files. Output is staged before replacement, so failed generation preserves the previous export. Nonempty directories require a valid manifest and `overwrite: true`; unrelated files and symlinks are rejected. Database imports are separate from output replacement and are not rolled back if a later export fails.
+
+## Migrating from 0.x
+
+This release intentionally removes the old API and configuration aliases.
+
+| Before                                              | Now                                                        |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| Default `gtfsToJson(config)` import                 | Named `exportJSON(config)` import                          |
+| `agencies[]`                                        | `sources[]`                                                |
+| `agencyKey`                                         | `sourceId` (feed identity)                                 |
+| Agency `path`, `url`, `headers`                     | `schedule.path`, `schedule.url`, `schedule.requestHeaders` |
+| Agency `agencyId`                                   | `export.agencyId` (string)                                 |
+| `sqlitePath`, `db`                                  | `database.path`, `database.client`                         |
+| `skipImport`                                        | Omit `schedule` for database-only sources                  |
+| `ignoreDuplicates`                                  | `schedule.import.validation.onDuplicateKey: "keep-first"`  |
+| `downloadTimeout`                                   | `schedule.timeoutMs`                                       |
+| `logLevel`, `logFunction`                           | `reporting.level`, `reporting.reporter`                    |
+| `warning` log level                                 | `warn`                                                     |
+| `--configPath`, `--skipImport`                      | `--config`; database-only sources                          |
+| `output/<agencyKey>/<agencyKey>.json` and `log.txt` | `json/<sourceId>/<sourceId>.json` and root manifest        |
+
+`agency_id` now contains the actual GTFS value instead of the old agency key; use `source_id` for feed identity. Routes with duplicate short names are no longer discarded. One source can contain multiple agencies; filter with `export.agencyId` or run separate exports into separate directories for agency-specific datasets. Old output directories have no manifest: choose a new directory for your first export. Reimport v4 databases into a fresh v5 database.
+
+Licensed under [MIT](LICENSE.txt).

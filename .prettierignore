@@ -1,0 +1,7 @@
+node_modules
+dist
+output
+json
+pnpm-lock.yaml
+config*.json
+!config-sample*.json

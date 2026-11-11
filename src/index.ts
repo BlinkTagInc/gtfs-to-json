@@ -1,1 +1,2 @@
-export { default } from './lib/gtfs-to-json.ts';
+export { exportJSON } from './export.ts';
+export type { JSONConfig, JSONExportOptions } from './config.ts';

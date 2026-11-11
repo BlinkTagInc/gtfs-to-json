@@ -1,0 +1,22 @@
+{
+  "database": { "path": "./transit.sqlite" },
+  "extensions": [],
+  "reporting": { "level": "info" },
+  "sources": [
+    {
+      "sourceId": "bus",
+      "schedule": {
+        "url": "https://example.com/gtfs.zip",
+        "timeoutMs": 60000,
+        "requestHeaders": { "Authorization": "Bearer replace-with-your-token" },
+        "import": { "validation": { "onDuplicateKey": "reject" } }
+      }
+    },
+    { "sourceId": "rail", "schedule": { "path": "./rail.zip" } }
+  ],
+  "export": {
+    "outputDirectory": "./json",
+    "overwrite": false,
+    "stopMergeDistanceMeters": 304.8
+  }
+}

@@ -6,10 +6,9 @@ interface Stop {
 }
 
 const earthRadiusMeters = 6371008.8;
-const duplicateDistanceMeters = 1000 * 0.3048;
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
-function areNearby(first: Stop, second: Stop): boolean {
+function areNearby(first: Stop, second: Stop, distanceMeters: number): boolean {
   const coordinates = [
     first.stop_lat,
     first.stop_lon,
@@ -37,10 +36,13 @@ function areNearby(first: Stop, second: Stop): boolean {
     2 * earthRadiusMeters * Math.asin(Math.sqrt(Math.min(1, haversine)));
 
   // Allow one micrometer of rounding error at the inclusive boundary.
-  return distance <= duplicateDistanceMeters + 1e-6;
+  return distance <= distanceMeters + 1e-6;
 }
 
-export function deduplicateStops<T extends Stop>(stops: T[]): T[] {
+export function deduplicateStops<T extends Stop>(
+  stops: T[],
+  distanceMeters = 304.8,
+): T[] {
   const seenIds = new Set<string>();
   const stopsByName = new Map<string | null, T[]>();
   const result: T[] = [];
@@ -52,7 +54,13 @@ export function deduplicateStops<T extends Stop>(stops: T[]): T[] {
     seenIds.add(stop.stop_id);
 
     const sameNameStops = stopsByName.get(stop.stop_name) ?? [];
-    if (sameNameStops.some((existing) => areNearby(existing, stop))) {
+    if (
+      stop.stop_name &&
+      distanceMeters > 0 &&
+      sameNameStops.some((existing) =>
+        areNearby(existing, stop, distanceMeters),
+      )
+    ) {
       continue;
     }
 

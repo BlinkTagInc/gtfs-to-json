@@ -1,0 +1,3 @@
+{
+  "sources": [{ "sourceId": "transit", "schedule": { "path": "./gtfs.zip" } }]
+}

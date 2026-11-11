@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: 'If you use GTFS-to-JSON in research, please cite it using the metadata below.'
+title: 'GTFS-to-JSON'
+type: software
+authors:
+  - family-names: 'Nee'
+    given-names: 'Brendan'
+    affiliation: 'BlinkTag Inc'
+repository-code: 'https://github.com/BlinkTagInc/gtfs-to-json'
+url: 'https://www.npmjs.com/package/gtfs-to-json'
+license: 'MIT'
